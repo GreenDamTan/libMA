@@ -566,12 +566,12 @@ class Bot(object):
             fairy_info = self.ma.fairy_floor(fairy_event.xpath('fairy/serial_id/text()')[0],
                         fairy_event.xpath('user/id/text()')[0],fairy_event.fairy.race_type)
             if fairy_event.xpath('fairy/serial_id/text()')[0] == fairy_id:
-                user_name = fairy_event.xpath('user/name/text()')[0]
+                user_name = fairy_event.xpath('user/name/text()')[0].encode('utf8')
                 battle = self.ma.fairy_battle(fairy_id, fairy_event.xpath('user/id/text()')[0],fairy_event.fairy.race_type)
                 result = []
                 fairy = battle.xpath('//battle_vs_info/player')[1]
-                result.append('LV%s by %s %s HP:%s ATK:%s -' % (fairy_event.xpath('fairy/lv/text()')[0],user_name,fairy.xpath('name/text()')[0], fairy_info.xpath('//fairy/hp/text()')[0],
-                                             fairy.xpath('.//power/text()')[0]))
+                result.append('LV%s by %s %s HP:%s ATK:%s -' % (fairy_event.xpath('fairy/lv/text()')[0],user_name,fairy.xpath('name/text()')[0].encode('utf8'), fairy_info.xpath('//fairy/hp/text()')[0],
+                                             fairy.xpath('.//power/text()')[0].encode('utf8')))
                 if battle.xpath('//battle_result/winner/text()')[0] != '0':
                     result.append('WINNER!')
                 damage = 0
@@ -589,9 +589,8 @@ class Bot(object):
                                     - int(battle.xpath('//battle_result/special_item/before_count/text()')[0])))
                     real_cp = coll/self.ma.cost
                     result.append('实际比率为:%s' % real_cp)
-                print result
-                print( ' '.join(result))
-                self.ma.fairy_data_collect(fairy_event.xpath('fairy/lv/text()')[0],fairy.xpath('name/text()')[0],fairy.xpath('.//power/text()')[0],fairy_info.xpath('//fairy/hp_max/text()')[0])
+                self._print( ' '.join(result))
+                self.db_fairyCollect(fairy_event.xpath('fairy/lv/text()')[0],fairy.xpath('name/text()')[0],fairy.xpath('.//power/text()')[0],fairy_info.xpath('//fairy/hp_max/text()')[0])
                 time.sleep(15)
 
     def func_battleFairy(self):
@@ -638,7 +637,6 @@ class Bot(object):
                 (fairy_id,fairy_lv,fairy_hp,fairy_name,user_name,fairy_limit_time) = fairy_inner
                 self._print( 'Lv%s %s by %s 余血:%s ATK:%s 时间:%s分钟' % (fairy_lv,fairy_name.encode('utf8'),user_name.encode('utf8'),fairy_hp,self.db_fairyDetail(fairy_lv,'atk',fairy_name),fairy_limit_time))
                 calc = self.func_battleCalc(strategy,fairy_lv,fairy_hp,cardset,fairy_name)
-                #self._print('test')
                 calc['bestfairy'] = fairy_id
                 choice.append(calc)
                 if int(calc['killcost']) < extend_config.LAST_HIT_BC:
@@ -656,7 +654,7 @@ class Bot(object):
                 choice_sorted = sorted(choice, key=lambda x: x['maxcpr'], reverse=True)
                 if choice_sorted[0]['maxcpr'] >= extend_config.COLLECTION_PER_BC:
                     self._print( '最高比率:%s' % choice_sorted[0]['maxcpr'])
-                    self.func_battleResult(choice_sorted[0]['bestcard'],choice_sorted[0]['bestfairy'])
+                    #self.func_battleResult(choice_sorted[0]['bestcard'],choice_sorted[0]['bestfairy'])
             if touch_fairy_set:
                 self._print( '舔妖')
                 for a in touch_fairy_set:
