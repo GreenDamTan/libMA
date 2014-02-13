@@ -659,7 +659,7 @@ class Bot(object):
                 choice_sorted = sorted(choice, key=lambda x: x['maxcpr'], reverse=True)
                 if choice_sorted[0]['maxcpr'] >= extend_config.COLLECTION_PER_BC:
                     self._print( '最高比率:%s' % choice_sorted[0]['maxcpr'])
-                    self.func_battleResult(choice_sorted[0]['bestcard'],choice_sorted[0]['bestfairy'])
+                    self.func_battleResult(choice_sorted[0]['bestchoice'],choice_sorted[0]['bestfairy'])
             if my_fairy_tag:
                 self.my_fairy = True
             else:
