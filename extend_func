@@ -246,6 +246,7 @@ class Bot(object):
             ap_limit = self.ma.ap_max - 10
         else:
             ap_limit = self.ma.ap_max / 2
+        #self._print([self.ma.ap,ap_limit,self.my_fairy])
         while self.ma.ap >= ap_limit:
             explore = self.ma.explore(areaInfo[0],areaInfo[1])
             if explore.xpath('//special_item'):
@@ -561,6 +562,7 @@ class Bot(object):
         return res
 
     def func_battleResult(self,card,fairy_id):
+        self._print(' | '.join([self.ma.cards[k].name for k in card]))
         self.ma.save_deck_card(card)
         for fairy_event in self.ma.fairy_select().xpath('//fairy_event'):
             fairy_info = self.ma.fairy_floor(fairy_event.xpath('fairy/serial_id/text()')[0],
@@ -633,7 +635,10 @@ class Bot(object):
         if fairy_set:
             fairy_sorted = sorted(fairy_set, key=lambda x: x[2])
             choice = []
+            my_fairy_tag = 0
             for fairy_inner in fairy_sorted:
+                if user_name == self.ma.name:
+                    my_fairy_tag = 1
                 (fairy_id,fairy_lv,fairy_hp,fairy_name,user_name,fairy_limit_time) = fairy_inner
                 self._print( 'Lv%s %s by %s 余血:%s ATK:%s 时间:%s分钟' % (fairy_lv,fairy_name.encode('utf8'),user_name.encode('utf8'),fairy_hp,self.db_fairyDetail(fairy_lv,'atk',fairy_name),fairy_limit_time))
                 calc = self.func_battleCalc(strategy,fairy_lv,fairy_hp,cardset,fairy_name)
@@ -655,6 +660,10 @@ class Bot(object):
                 if choice_sorted[0]['maxcpr'] >= extend_config.COLLECTION_PER_BC:
                     self._print( '最高比率:%s' % choice_sorted[0]['maxcpr'])
                     self.func_battleResult(choice_sorted[0]['bestcard'],choice_sorted[0]['bestfairy'])
+            if my_fairy_tag:
+                self.my_fairy = True
+            else:
+                self.my_fairy = False
             if touch_fairy_set:
                 self._print( '舔妖')
                 for a in touch_fairy_set:
