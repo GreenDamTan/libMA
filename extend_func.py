@@ -47,13 +47,13 @@ class Bot(object):
             self.battleCard = self.db_battleCardCollect()
         self.msg_itemlist()
         self.msg_ranking()
+        self.func_sellCard()
+        self.func_autoCardCombination()
         self.func_battleFairy()
         self.func_mostPowerful()
-        self.func_exploreArea()
-        self.func_autoCardCombination()
-        self.func_pvpbattle()
         self.func_autoGetReward()
-        self.func_sellCard()
+        self.func_exploreArea()
+        self.func_pvpbattle()
         return False
 
     def db_connect(self):
@@ -104,6 +104,8 @@ class Bot(object):
                     addquery = "insert into fairy_d values(NULL,'%s',%s,%s,%s,%s)" % (fname,atkK,atkB,hpK,hpB)
                     countfairy = cursor.execute(addquery)
                     conn.commit()
+                else:
+                    return 1
             else:
                 return 1
         atk = int(lv)*atkK+atkB
@@ -643,23 +645,21 @@ class Bot(object):
                 self._print( 'Lv%s %s by %s 余血:%s ATK:%s 时间:%s分钟' % (fairy_lv,fairy_name.encode('utf8'),user_name.encode('utf8'),fairy_hp,self.db_fairyDetail(fairy_lv,'atk',fairy_name),fairy_limit_time))
                 calc = self.func_battleCalc(strategy,fairy_lv,fairy_hp,cardset,fairy_name)
                 calc['bestfairy'] = fairy_id
-                choice.append(calc)
                 if int(calc['killcost']) < extend_config.LAST_HIT_BC:
                     self._print( '%sBC内尾刀为先' % extend_config.LAST_HIT_BC)
-                    bestcard = calc['killcard']
-                    bestfairy = fairy_id
-                    self.func_battleResult(bestcard,bestfairy)
+                    self.func_battleResult(calc['killcard'],fairy_id)
                     break
                 if strategy == 'kill' and fairy_event.xpath('user/id/text()') == self.user_id:
                     self._print('秒自妖需要%s的BC' % calc['killcost'])
                     bestcard = calc['killcard']
                     bestfairy = fairy_id
                     break
+                choice.append(calc)
             if choice:
                 choice_sorted = sorted(choice, key=lambda x: x['maxcpr'], reverse=True)
                 if choice_sorted[0]['maxcpr'] >= extend_config.COLLECTION_PER_BC:
                     self._print( '最高比率:%s' % choice_sorted[0]['maxcpr'])
-                    self.func_battleResult(choice_sorted[0]['bestchoice'],choice_sorted[0]['bestfairy'])
+                    self.func_battleResult(choice_sorted[0]['bestChoice'],choice_sorted[0]['bestfairy'])
             if my_fairy_tag:
                 self.my_fairy = True
             else:
@@ -701,6 +701,7 @@ class Bot(object):
                     if not mainCard:
                         mainCard = [b.serial_id,b.lv,b.lv_max,b.plus_limit_count,b.name]
                     elif b.lv >= mainCard[1]:
+                        plus_limit_count += 1
                         addCard.append(self.ma.cards[mainCard[0]])
                         mainCard = [b.serial_id,b.lv,b.lv_max,b.plus_limit_count,b.name]
                     else:
@@ -710,6 +711,8 @@ class Bot(object):
                         and b.name.encode('utf8') not in extend_config.AC_BLACK_LIST \
                         and len(addCard) < extend_config.AC_CARDS_PER_TIME:
                             addCard.append(b)
+                if b.name.encode('utf8') in extend_config.AC_BL and b.lv == 1 and b.holography == 0:
+                    addCard.append(b)
             if mainCard[2] > mainCard[1] and len(addCard):
                 self._print('对 %s 进行合成'% mainCard[4].encode('utf8'))
                 self.ma.card_compound(mainCard[0],addCard)
@@ -728,7 +731,7 @@ class Bot(object):
         return
 
     def func_autoGetReward(self):
-        if extend_config.AUTO_GET_REWARD:
+        if extend_config.AUTO_GET_REWARD and len(self.ma.cards) < 250:
             self.ma.fairy_rewards()
 
     def func_pvpbattle(self):
