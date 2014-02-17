@@ -756,3 +756,4 @@ class Bot(object):
                 self._print( "You Win! Level Up!")
         else :
             self._print( "Oh! you lose")
+
