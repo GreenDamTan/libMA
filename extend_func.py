@@ -45,8 +45,10 @@ class Bot(object):
         self.db_cardCollect()
         if not self.battleCard:
             self.battleCard = self.db_battleCardCollect()
+        self.func_getRewardMoney()
         self.msg_itemlist()
         self.msg_ranking()
+        self.func_autoGacha()
         self.func_sellCard()
         self.func_autoCardCombination()
         self.func_battleFairy()
@@ -54,6 +56,7 @@ class Bot(object):
         self.func_autoGetReward()
         self.func_exploreArea()
         self.func_pvpbattle()
+        self.func_friendList()
         return False
 
     def db_connect(self):
@@ -105,7 +108,16 @@ class Bot(object):
                     countfairy = cursor.execute(addquery)
                     conn.commit()
                 else:
-                    return 1
+                    calc_q = "select * from fairy where name = '%s' and lv = %s" % (fname,lv)
+                    cursor.execute(calc_q)
+                    res_q = cursor.fetchone()
+                    if res_q:
+                        if option == 'atk':
+                            return res_q[3]
+                        else:
+                            return res_q[4]
+                    else:
+                        return 1
             else:
                 return 1
         atk = int(lv)*atkK+atkB
@@ -183,16 +195,18 @@ class Bot(object):
         #1是AP，2是BC，3是假卡，4是次元因子，68是金灿灿的碎片，201是巧克力，202是七彩辉石
         self._print( 'BC:%s/%s AP:%s/%s EX:%s' % (self.ma.bc,self.ma.bc_max,self.ma.ap,self.ma.ap_max,self.ma.ex_gauge))
         self._print( '绿茶:%s个 红茶:%s个 友情点:%s 蛋卷:%s 卡数:%s 未领卡:%s张' % (self.ma.iterms['1'],self.ma.iterms['2'],self.ma.friendship_point,self.ma.gacha_ticket,len(self.ma.cards),fairy_reward))
-        self._print( '箱中友情点:%s点 箱子:%s 金钱:%s 等级:%s 加点:%s 妖精出现中:%s' % (count,ac,self.ma.gold,self.ma.town_level,self.ma.free_ap_bc_point,self.ma.fairy_appearance))
+        self._print( '箱中友情点:%s点 箱子:%s 金钱:%s 等级:%s 加点:%s 妖精出现中:%s 我的妖精:%s' % (count,ac,self.ma.gold,self.ma.town_level,self.ma.free_ap_bc_point,self.ma.fairy_appearance,self.my_fairy))
         self._print( '已经遇到%s只妖精 其中有%s只觉醒' % (len(self.touched_fairies),len(self.touched_spe_fairies)))
 
     def msg_ranking(self, ranktype_id=0):
         reload(extend_config)
         if extend_config.SHOW_RANKING:
+            ranktype_id = extend_config.RANKING_TYPE
             ranklist = self.ma.get("~/ranking/ranking", ranktype_id=ranktype_id, top=0, move=1)
-            self._print( '排行榜类型:%s' % (ranklist.xpath('//ranking/rankingtype_id/text()')[0]))
+            self._print( '排行榜类型:%s' % (ranklist.xpath('//ranking/ranktype_id/text()')[0]))
             for rl in ranklist.xpath('//ranking/ranktype_list/ranktype'):
                 self._print( '%s %s'% (rl.xpath('id/text()')[0],rl.xpath('title/text()')[0]))
+                #self._print(self.ma.user_id)
             for fl in ranklist.xpath('//ranking/user_list/user'):
                 if int(self.ma.user_id) == int(fl.xpath('id/text()')[0]):
                     self._print( '%s %s %s'% (fl.xpath('name/text()')[0],fl.xpath('rank/text()')[0],fl.xpath('battle_event_point/text()')[0]))
@@ -211,7 +225,8 @@ class Bot(object):
             area_id_c = int(area.xpath('id/text()')[0])
             area_name = area.xpath('name/text()')[0].encode('utf8')
             if '限时' in area_name:
-                self.ma.explore(area_id_c+1,1)
+                area_id.append(area_id_c)
+                #self.ma.explore(area_id_c+1,1)
                 continue
             if '公会' in area_name:
                 continue
@@ -247,7 +262,9 @@ class Bot(object):
         if self.my_fairy:
             ap_limit = self.ma.ap_max - 10
         else:
-            ap_limit = self.ma.ap_max / 2
+            ap_limit = self.ma.ap_max / 9
+            if self.ma.bc > 200:
+                ap_limit = 10
         #self._print([self.ma.ap,ap_limit,self.my_fairy])
         while self.ma.ap >= ap_limit:
             explore = self.ma.explore(areaInfo[0],areaInfo[1])
@@ -306,6 +323,8 @@ class Bot(object):
                 self.ma.card_sell(card_sell_serial_id)
 
     def func_getRewardMoney(self):
+        if self.ma.free_ap_bc_point != 0:
+            self.ma.pointsetting(0,int(self.ma.free_ap_bc_point))
         for rewardboxeach in self.ma.rewardbox().xpath('//rewardbox_list/rewardbox'):
             if int(rewardboxeach.xpath('type/text()')[0]) == 3:
                 self.ma.get_rewards(rewardboxeach.xpath('id/text()')[0])
@@ -605,6 +624,7 @@ class Bot(object):
         touch_fairy_set = []
         cardset = self.battleCard
         for fairy_event in self.ma.fairy_select().xpath('//fairy_event'):
+            self.my_fairy = None
             if fairy_event.xpath('put_down/text()')[0] == '1':
                 fairy_in = []
                 fairy_info = self.ma.fairy_floor(fairy_event.xpath('fairy/serial_id/text()')[0],
@@ -707,7 +727,7 @@ class Bot(object):
                     else:
                         plus_limit_count += 1
                         addCard.append(b)
-                if b.rarity <= extend_config.AC_RARITY and b.holography == 0 and b.lv == 1 \
+                if b.rarity <= extend_config.AC_RARITY and b.holography == 0 and b.lv <= 5 \
                         and b.name.encode('utf8') not in extend_config.AC_BLACK_LIST \
                         and len(addCard) < extend_config.AC_CARDS_PER_TIME:
                             addCard.append(b)
@@ -718,7 +738,7 @@ class Bot(object):
                 self.ma.card_compound(mainCard[0],addCard)
             if not len(addCard):
                 self._print('没有狗粮')
-                break
+                continue
             if mainCard[2] == mainCard[1]:
                 if mainCard[3] == 0:
                     self._print('%s 已经满级！' % mainCard[4].encode('utf8'))
@@ -736,7 +756,7 @@ class Bot(object):
 
     def func_pvpbattle(self):
         reload(extend_config)
-        if not extend_config.PVP_SWITCH:
+        if not extend_config.PVP_SWITCH or self.ma.bc < 5:
             return
         users = []
         random_str = random.choice(',.1234567890abcdefghijklmnopqrstuvwxyz!@#$^&*()')
@@ -746,7 +766,15 @@ class Bot(object):
             level = user.xpath('town_level/text()')[0]
             if friend == '0' and level == '4':
                 users.append(uid)
-        battle_result = self.ma.get("~/battle/battle",lake_id=3,parts_id=3,user_id=random.choice(users))
+
+        checktime = int(time.strftime("%M", time.localtime()))
+        checkmonth = str(time.strftime("%b", time.localtime()))
+        checkday = int(time.strftime("%d", time.localtime()))
+        if checkmonth == 'Feb' and checkday in range(22,24):
+            self.ma.save_deck_card([self.ma.cards[23159851],])
+            battle_result = self.ma.get("~/battle/battle", user_id=random.choice(users), event_id=54)
+        else:
+            battle_result = self.ma.get("~/battle/battle",lake_id=3,parts_id=3,user_id=random.choice(users))
         win = battle_result.xpath('//winner/text()')[0]
         if win == '1':
             get_exp = int(battle_result.xpath('//before_exp/text()')[0]) - int(battle_result.xpath('//after_exp/text()')[0])
@@ -757,3 +785,27 @@ class Bot(object):
         else :
             self._print( "Oh! you lose")
 
+    def func_autoGacha(self):
+        reload(extend_config)
+        if self.ma.friendship_point >= 48000 or extend_config.GACHA_SWITCH:
+            self.ma.gacha_buy()
+
+    def func_friendList(self):
+        reload(extend_config)
+        if extend_config.SHOW_FRIEND:
+            fl = self.ma.friendlist()
+            coo = 0
+            for fri in fl.xpath('//friend_list/user'):
+                self._print( 'No.%s %s %s %s LV%s'% (coo,fri.xpath('name/text()')[0],fri.xpath('id/text()')[0],fri.xpath('last_login/text()')[0],fri.xpath('town_level/text()')[0]))
+                coo += 1
+            self._print( '-----------')
+            #self.ma.remove_friend('156451')
+            #self.ma.approve_friend('78389')
+            noti = self.ma.friend_notice()
+            ccc = 0
+            for fri in noti.xpath('//friend_notice/user_list/user'):
+                self._print( 'NO.%s %s %s %s LV%s %s'% (ccc,fri.xpath('name/text()')[0],fri.xpath('id/text()')[0],fri.xpath('last_login/text()')[0],fri.xpath('town_level/text()')[0],fri.xpath('friends/text()')[0]))
+                ccc += 1
+                #if str(fri.xpath('last_login/text()')[0]) != '今天':
+                if int(fri.xpath('town_level/text()')[0]) < 70 or int(fri.xpath('friends/text()')[0]) == 30:
+                    self.ma.refuse_friend(fri.xpath('id/text()')[0])

@@ -6,23 +6,30 @@
 #Database
 HOST = ''
 USER = ''
-PASSWD = ''
+PASSWD = '!@#'
 DB = ''
 
 #Strategy
-DA_MO_SHEN = True
+DA_MO_SHEN = False
 STRATEGY = 'collect' #kill or collect
 LAST_HIT_BC = 30
 COLLECTION_PER_BC = 6
 
 #Area
-SHOW_AREA = False
+SHOW_AREA = True
 
 #Ranking
-SHOW_RANKING = False
+SHOW_RANKING = True
+RANKING_TYPE = 3
+
+#Friend List
+SHOW_FRIEND = False
 
 #Get reward
-AUTO_GET_REWARD = False
+AUTO_GET_REWARD = True
+
+#Gacha
+GACHA_SWITCH = False
 
 #Sell card
 SELL_CARD_SWITCH = False
@@ -35,13 +42,17 @@ SPECIAL_CARD = {
         "纯白型红玉之髓" : [2,2,1,14],
         "华恋型玛洛斯" : [2,2,1,14],
         "姬忧型茶茶" : [2,2,1,14],
+        "义妹型奎利亚" : [2,2,15,28],
+        "义妹型艾玛" : [2,2,15,28],
+        "义妹型爱匹莉娅" : [2,3,1,16],
         }
 
 #Auto combination card
 AC_SWITCH = True
-AC_CARD= ('华恋型玛洛斯',)
-AC_BLACK_LIST = ('切尔莉','超级切尔莉','支援型律涅特','第二型毕斯克拉乌莉特')
-AC_CARDS_PER_TIME = 10
+AC_CARD= ()
+AC_BLACK_LIST = ('第二型毕斯克拉乌莉特')
+AC_BL = ()
+AC_CARDS_PER_TIME = 30
 AC_RARITY = 3
 
 #PVP switch
