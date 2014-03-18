@@ -37,8 +37,9 @@ class Bot(object):
         self.battleCard = []
         self.min_cost_card = None
 
-    def run(self):
+    def run(self,fs):
         try:
+            self.touched_fairies = fs
             self._print('--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*--*')
             body = self.ma.login(config.loginId, config.password)
             if not self.ma.user_id:
