@@ -149,7 +149,7 @@ class Bot(object):
         conn = self.db_connect()
         cursor = conn.cursor()
         cursor.execute("set names utf8")
-        cardclean = "delete from `card` where user_id = ".self.ma.user_id
+        cardclean = "delete from `card` where user_id = %s" % (self.ma.user_id)
         cursor.execute(cardclean)
         conn.commit()
         cardreset = "ALTER TABLE  `card` AUTO_INCREMENT =1";
