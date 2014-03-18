@@ -136,7 +136,7 @@ class MA:
         else:
             params = _cryptParams(kwargs)
 
-        response = self.session.post(self.abs_path(resource), params, params={"cyt": 1})
+        response = self.session.post(self.abs_path(resource), params, params={"cyt": 1}, timeout=30)
         if response.status_code != 200:
             time.sleep(1)
             return self.cat(resource, params, **kwargs)
@@ -174,7 +174,7 @@ class MA:
                 data = revision.xpath('./%s/text()' % attr)
                 if data:
                     self.revision[attr] = int(data[0])
-                         
+
 
         your_data = header.xpath('./your_data')
         if your_data:
@@ -256,7 +256,7 @@ class MA:
         # only first 14 works..
         password = password[:14]
         return self.cat("~/notification/post_devicetoken", login_id=login_id, password=password, app=app,
-                token=token.encode("base64").replace("\n", ""), S=S) 
+                token=token.encode("base64").replace("\n", ""), S=S)
 
     def regist(self, login_id, password, invitation_id, platform=2, device_id=None):
         if device_id is None:
@@ -360,7 +360,7 @@ class MA:
 
     def cardcollection(self):
         return self.get("~/menu/cardcollection")
-    
+
     def haveparts(self):
         return self.get("~/menu/haveparts")
 
@@ -387,7 +387,7 @@ class MA:
 
     def item_use(self, item_id):
         return self.get("~/item/use", item_id=item_id)
-    
+
     def gacha_select(self):
         return self.get("~/gacha/select/getcontents")
 
@@ -497,7 +497,7 @@ class MA:
         if not getattr(self, 'roundtable', None):
             self.roundtable_edit()
         return sum([x.cost for x in self.roundtable])
-    
+
     def story_getoutline(self, check=1):
         return self.get("~/story/getoutline", check=check)
 
