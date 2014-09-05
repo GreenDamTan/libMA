@@ -8,7 +8,6 @@
 import os
 import re
 import time
-import json
 import array
 import random
 import config
@@ -65,7 +64,10 @@ class Card:
     def from_xml(cls, card):
         c = cls()
         for node in card.iterchildren():
-            setattr(c, node.tag, int(node.text))
+            if node.text:
+                setattr(c, node.tag, int(node.text))
+            else:
+                setattr(c, node.tag, 0)
         return c
 
     @property
@@ -136,7 +138,7 @@ class MA:
         else:
             params = _cryptParams(kwargs)
 
-        response = self.session.post(self.abs_path(resource), params, params={"cyt": 1}, timeout=30)
+        response = self.session.post(self.abs_path(resource), params, params={"cyt": 1},timeout=30)
         if response.status_code != 200:
             time.sleep(1)
             return self.cat(resource, params, **kwargs)
